@@ -1,0 +1,130 @@
+# Clase base abstracta para representar cualquier transacción
+class Transaccion:
+    
+    def __init__(self, monto, descripcion):
+        self._monto = abs(monto)  # El monto siempre es positivo
+        self._descripcion = descripcion
+        self._tipo = None  # Se define en las subclases (+ o -)    
+    # Métodos GET para acceder a atributos encapsulados
+    def get_tipo(self):
+        return self._tipo
+    
+    def get_monto(self):
+        return self._monto
+    
+    def get_descripcion(self):
+        return self._descripcion
+    
+    # Método SET para cambiar la descripción
+    def set_descripcion(self, nueva_descripcion):
+        self._descripcion = nueva_descripcion
+    
+    # Método abstracto → debe implementarse en subclases
+    def calcular_impacto(self):
+        raise NotImplementedError("Debe implementarse en subclases.")
+    
+    # Representación en texto de la transacción
+    def __str__(self):
+        signo = '+' if self._tipo == '+' else '-'
+        return f"{signo}${self._monto:.2f} - {self._descripcion}"
+# Subclase para ingresos
+class Ingreso(Transaccion):
+    def __init__(self, monto, descripcion):
+        super().__init__(monto, descripcion)
+        self._tipo = '+'
+    
+    def calcular_impacto(self):
+        return self._monto  # Impacto positivo en el balance
+
+
+# Subclase para gastos
+class Gasto(Transaccion):
+    def __init__(self, monto, descripcion):
+        super().__init__(monto, descripcion)
+        self._tipo = '-'
+    
+    def calcular_impacto(self):
+        return -self._monto  # Impacto negativo en el balance
+# Clase principal que gestiona todas las finanzas
+class GestorFinanzas:
+    def __init__(self):
+        self._transacciones = []  # Lista privada de transacciones
+        self._balance = 0.0       # Balance inicial en 0
+    
+    # Encapsulamiento con GET/SET
+    def get_balance(self):
+        return self._balance
+    
+    def get_transacciones(self):
+        return self._transacciones[:]  # Devuelve una copia (protege la lista)
+    
+    def set_balance(self, nuevo_balance):
+        if isinstance(nuevo_balance, (int, float)):
+            self._balance = nuevo_balance
+    
+    # Agregar transacción y actualizar balance
+    def agregar_transaccion(self, transaccion):
+        if isinstance(transaccion, Transaccion):
+            self._transacciones.append(transaccion)
+            self._balance += transaccion.calcular_impacto()
+            print(f"Transacción agregada: {transaccion}")
+        else:
+            print("Error: Solo se pueden agregar objetos de tipo Transaccion.")
+    
+    # Mostrar balance
+    def ver_balance(self):
+        print(f"\nBalance actual: ${self._balance:.2f}")
+    
+    # Listar transacciones registradas
+    def listar_transacciones(self):
+        if not self._transacciones:
+            print("\nNo hay transacciones registradas.")
+            return
+        print("\n--- Transacciones ---")
+        for i, t in enumerate(self._transacciones, 1):
+            print(f"{i}. {t}")
+    # Crear transacción desde entrada por teclado
+    def crear_y_agregar_transaccion(self):
+        try:
+            tipo = input("¿Es un ingreso (+) o gasto (-)? Ingresa '+' o '-': ").strip()
+            if tipo not in ['+', '-']:
+                print("Tipo inválido. Usa '+' para ingreso o '-' para gasto.")
+                return
+            
+            monto = float(input("Ingresa el monto: "))
+            descripcion = input("Ingresa una descripción: ").strip()
+            
+            if tipo == '+':
+                transaccion = Ingreso(monto, descripcion)
+            else:
+                transaccion = Gasto(monto, descripcion)
+            
+            self.agregar_transaccion(transaccion)
+        except ValueError:
+            print("Monto inválido. Debe ser un número.")
+# Menú principal (interfaz de texto)
+def menu(gestor):
+    while True:
+        print("\n=== Gestor de Finanzas Personales (POO) ===")
+        print("1. Agregar transacción")
+        print("2. Ver balance")
+        print("3. Listar transacciones")
+        print("4. Salir")
+        
+        opcion = input("Elige una opción (1-4): ").strip()
+    
+        if opcion == '1':
+            gestor.crear_y_agregar_transaccion()
+        elif opcion == '2':
+            gestor.ver_balance()
+        elif opcion == '3':
+            gestor.listar_transacciones()
+        elif opcion == '4':
+            print("¡Hasta luego!")
+            break
+        else:
+            print("Opción inválida. Intenta de nuevo.")
+# Punto de entrada
+if __name__ == "__main__":
+    gestor = GestorFinanzas()
+    menu(gestor)
