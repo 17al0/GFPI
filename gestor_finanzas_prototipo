@@ -1,10 +1,10 @@
-# Clase base abstracta para representar cualquier transacción
 class Transaccion:
     
     def __init__(self, monto, descripcion):
         self._monto = abs(monto)  # El monto siempre es positivo
         self._descripcion = descripcion
-        self._tipo = None  # Se define en las subclases (+ o -)    
+        self._tipo = None  # Se define en las subclases (+ o -)
+    
     # Métodos GET para acceder a atributos encapsulados
     def get_tipo(self):
         return self._tipo
@@ -27,7 +27,8 @@ class Transaccion:
     def __str__(self):
         signo = '+' if self._tipo == '+' else '-'
         return f"{signo}${self._monto:.2f} - {self._descripcion}"
-# Subclase para ingresos
+
+
 class Ingreso(Transaccion):
     def __init__(self, monto, descripcion):
         super().__init__(monto, descripcion)
@@ -37,7 +38,6 @@ class Ingreso(Transaccion):
         return self._monto  # Impacto positivo en el balance
 
 
-# Subclase para gastos
 class Gasto(Transaccion):
     def __init__(self, monto, descripcion):
         super().__init__(monto, descripcion)
@@ -45,13 +45,13 @@ class Gasto(Transaccion):
     
     def calcular_impacto(self):
         return -self._monto  # Impacto negativo en el balance
-# Clase principal que gestiona todas las finanzas
+
+
 class GestorFinanzas:
     def __init__(self):
         self._transacciones = []  # Lista privada de transacciones
         self._balance = 0.0       # Balance inicial en 0
     
-    # Encapsulamiento con GET/SET
     def get_balance(self):
         return self._balance
     
@@ -62,7 +62,6 @@ class GestorFinanzas:
         if isinstance(nuevo_balance, (int, float)):
             self._balance = nuevo_balance
     
-    # Agregar transacción y actualizar balance
     def agregar_transaccion(self, transaccion):
         if isinstance(transaccion, Transaccion):
             self._transacciones.append(transaccion)
@@ -71,11 +70,9 @@ class GestorFinanzas:
         else:
             print("Error: Solo se pueden agregar objetos de tipo Transaccion.")
     
-    # Mostrar balance
     def ver_balance(self):
         print(f"\nBalance actual: ${self._balance:.2f}")
     
-    # Listar transacciones registradas
     def listar_transacciones(self):
         if not self._transacciones:
             print("\nNo hay transacciones registradas.")
@@ -83,7 +80,7 @@ class GestorFinanzas:
         print("\n--- Transacciones ---")
         for i, t in enumerate(self._transacciones, 1):
             print(f"{i}. {t}")
-    # Crear transacción desde entrada por teclado
+    
     def crear_y_agregar_transaccion(self):
         try:
             tipo = input("¿Es un ingreso (+) o gasto (-)? Ingresa '+' o '-': ").strip()
@@ -102,17 +99,71 @@ class GestorFinanzas:
             self.agregar_transaccion(transaccion)
         except ValueError:
             print("Monto inválido. Debe ser un número.")
-# Menú principal (interfaz de texto)
-def menu(gestor):
+
+
+class Usuario:
+    def __init__(self, nombre, contrasena):
+        self._nombre = nombre
+        self._contrasena = contrasena  # En texto plano (mejorar luego con hash)
+        self._gestor = GestorFinanzas()
+    
+    def get_nombre(self):
+        return self._nombre
+    
+    def get_gestor(self):
+        return self._gestor
+    
+    def verificar_contrasena(self, contrasena):
+        return self._contrasena == contrasena
+
+
+usuarios = {}
+
+def login_usuario():
+    nombre = input("Ingresa tu nombre de usuario (o 'nuevo' para crear uno): ").strip().lower()
+    
+    if nombre == 'nuevo':
+        nombre_nuevo = input("Ingresa un nombre de usuario nuevo: ").strip().lower()
+        if nombre_nuevo in usuarios:
+            print("Ese usuario ya existe. Usa otro nombre.")
+            return None
+        
+        contrasena = input("Ingresa una contraseña: ").strip()
+        contrasena_confirm = input("Confirma la contraseña: ").strip()
+        if contrasena == "" or contrasena != contrasena_confirm:
+            print("Las contraseñas no coinciden o están vacías. Intenta de nuevo.")
+            return None
+        
+        usuarios[nombre_nuevo] = Usuario(nombre_nuevo, contrasena)
+        print(f"¡Usuario '{nombre_nuevo}' creado exitosamente! Balance inicial: $0.00")
+        return usuarios[nombre_nuevo]
+    
+    elif nombre in usuarios:
+        contrasena = input("Ingresa tu contraseña: ").strip()
+        usuario = usuarios[nombre]
+        if usuario.verificar_contrasena(contrasena):
+            print(f"¡Bienvenido de nuevo, {nombre}!")
+            return usuario
+        else:
+            print("Contraseña incorrecta.")
+            return None
+    else:
+        print("Usuario no encontrado. Crea uno nuevo primero.")
+        return None
+
+
+def menu(usuario):
+    gestor = usuario.get_gestor()
     while True:
-        print("\n=== Gestor de Finanzas Personales (POO) ===")
+        print(f"\n=== Gestor de Finanzas - Usuario: {usuario.get_nombre()} ===")
         print("1. Agregar transacción")
         print("2. Ver balance")
         print("3. Listar transacciones")
-        print("4. Salir")
+        print("4. Cambiar de usuario")
+        print("5. Salir")
         
-        opcion = input("Elige una opción (1-4): ").strip()
-    
+        opcion = input("Elige una opción (1-5): ").strip()
+        
         if opcion == '1':
             gestor.crear_y_agregar_transaccion()
         elif opcion == '2':
@@ -120,11 +171,22 @@ def menu(gestor):
         elif opcion == '3':
             gestor.listar_transacciones()
         elif opcion == '4':
+            print("Cerrando sesión...")
+            return False  # Indica que debe hacer login de nuevo
+        elif opcion == '5':
             print("¡Hasta luego!")
-            break
+            return True  # Indica salida completa
         else:
             print("Opción inválida. Intenta de nuevo.")
-# Punto de entrada
+
+
 if __name__ == "__main__":
-    gestor = GestorFinanzas()
-    menu(gestor)
+    print("=== Bienvenido al Gestor de Finanzas Multi-Usuario con Contraseña ===")
+    salir = False
+    while not salir:
+        usuario = login_usuario()
+        if usuario is None:
+            continue  # Vuelve a pedir login si falló
+        salir_menu = menu(usuario)
+        if salir_menu:
+            salir = True
