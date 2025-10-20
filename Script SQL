@@ -1,0 +1,22 @@
+CREATE DATABASE gestor_finanzas;
+USE gestor_finanzas;
+
+-- Tabla de usuarios
+CREATE TABLE Usuario (
+    id_usuario INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(50) NOT NULL UNIQUE,
+    contrasena VARCHAR(255) NOT NULL
+);
+
+-- Tabla de transacciones
+CREATE TABLE Transaccion (
+    id_transaccion INT AUTO_INCREMENT PRIMARY KEY,
+    monto DECIMAL(10,2) NOT NULL CHECK (monto > 0),
+    descripcion VARCHAR(255),
+    tipo ENUM('+', '-') NOT NULL,
+    fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    id_usuario INT NOT NULL,
+    FOREIGN KEY (id_usuario) REFERENCES Usuario(id_usuario)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
