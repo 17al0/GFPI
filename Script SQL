@@ -1,14 +1,14 @@
+DROP DATABASE IF EXISTS gestor_finanzas;
 CREATE DATABASE gestor_finanzas;
 USE gestor_finanzas;
 
--- Tabla de usuarios
 CREATE TABLE Usuario (
     id_usuario INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(50) NOT NULL UNIQUE,
-    contrasena VARCHAR(255) NOT NULL
+    contrasena VARCHAR(255) NOT NULL,
+    balance DECIMAL(10,2) NOT NULL DEFAULT 0
 );
 
--- Tabla de transacciones
 CREATE TABLE Transaccion (
     id_transaccion INT AUTO_INCREMENT PRIMARY KEY,
     monto DECIMAL(10,2) NOT NULL CHECK (monto > 0),
@@ -16,7 +16,22 @@ CREATE TABLE Transaccion (
     tipo ENUM('+', '-') NOT NULL,
     fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     id_usuario INT NOT NULL,
+    categoria VARCHAR(50) DEFAULT 'General',  -- ← AQUÍ ESTÁ BIEN ESCRITO
     FOREIGN KEY (id_usuario) REFERENCES Usuario(id_usuario)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+CREATE TABLE Transferencia (
+    id_transferencia INT AUTO_INCREMENT PRIMARY KEY,
+    id_origen INT NOT NULL,
+    id_destino INT NOT NULL,
+    monto DECIMAL(10,2) NOT NULL CHECK (monto > 0),
+    fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_origen) REFERENCES Usuario(id_usuario)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    FOREIGN KEY (id_destino) REFERENCES Usuario(id_usuario)
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
